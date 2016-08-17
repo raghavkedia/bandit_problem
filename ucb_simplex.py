@@ -3,6 +3,10 @@ from .models import (Algorithm, Arm)
 
 class UCB_Simplex(Algorithm):
 
+    def __init__(self, budget, num_arms):
+        self.budget = budget
+        super(UCB_Simplex, self).__init__(num_arms)
+
     # should override run method
     def run(self):
         pass

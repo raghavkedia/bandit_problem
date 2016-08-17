@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class Arm:
+class Arm(object):
 
     def __init__(self, index):
         self.reward = 0
@@ -23,7 +23,7 @@ class Arm:
         pass
 
 
-class Algorithm:
+class Algorithm(object):
 
     # need to figure out inputs to algorithms
 
@@ -42,3 +42,43 @@ class Algorithm:
     def pull_arm(self, arm_index):
         arm = self.arms[arm_index]
         # pull the arm
+
+    # @property
+    # def reward(self):
+    #     return self._reward
+
+    # @reward.setter
+    # def reward(self, value):
+    #     self._reward = value
+
+    # @property
+    # def cost(self):
+    #     return self._cost
+
+    # @cost.setter
+    # def cost(self, value):
+    #     self._cost = value
+
+    # @property
+    # def num_pulls(self):
+    #     return self._num_pulls
+
+    # @num_pulls.setter
+    # def num_pulls(self, value):
+    #     self._num_pulls = value
+
+    # @property
+    # def curr_time(self):
+    #     return self._curr_time
+
+    # @curr_time.setter
+    # def curr_time(self, value):
+    #     self._curr_time = value
+
+    # @property
+    # def index(self):
+    #     return self._index
+
+    # @index.setter
+    # def index(self, value):
+    #     self._index = value
