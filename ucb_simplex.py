@@ -1,6 +1,6 @@
 import numpy as np
 
-from models import (Algorithm, Arm, InputModel)
+from models import (UCB, Arm, InputModel)
 
 
 class IID_InputModel(InputModel):
@@ -23,7 +23,7 @@ class IID_InputModel(InputModel):
         arm.curr_reward = new_reward
 
 
-class UCB_Simplex(Algorithm):
+class UCB_Simplex(UCB):
 
     def __init__(self, budget, arms, beta):
         self.budget = budget
@@ -47,21 +47,6 @@ class UCB_Simplex(Algorithm):
         for arm in self.arms:
             arm.input_model.update_arm(arm)
             arm.curr_time = arm.curr_time + 1
-
-    def calc_max_UCB(self):
-        max_arm = self.arms[0]
-        max_UCB = self.calc_UCB(self.arms[0])
-        for index, arm in enumerate(self.arms[1:]):
-            ucb = self.calc_UCB(arm)
-            if ucb > max_UCB:
-                max_arm = arm
-                max_UCB = ucb
-
-        return max_arm
-
-    def calc_UCB(self, arm):
-        numerator = arm.reward + (self.beta * arm.calc_e())
-        return numerator / arm.cost
 
 
 iid_one = IID_InputModel(1, 1)

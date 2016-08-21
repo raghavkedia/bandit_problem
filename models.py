@@ -47,3 +47,21 @@ class Algorithm(object):
     def pull_arm(self, arm_index):
         pass
         # pull the arm
+
+
+class UCB(Algorithm):
+
+    def calc_max_UCB(self):
+        max_arm = self.arms[0]
+        max_UCB = self.calc_UCB(self.arms[0])
+        for index, arm in enumerate(self.arms[1:]):
+            ucb = self.calc_UCB(arm)
+            if ucb > max_UCB:
+                max_arm = arm
+                max_UCB = ucb
+
+        return max_arm
+
+    def calc_UCB(self, arm):
+        numerator = arm.reward + (self.beta * arm.calc_e())
+        return numerator / arm.cost
