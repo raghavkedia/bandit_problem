@@ -9,7 +9,8 @@ class Arm(object):
         self.cost = 0
         self.curr_cost = 0
         self.curr_reward = 0
-        # I'm initializing to 1 just so we dont divide by 0 when calculating emprical estimate
+        # I'm initializing to 1 just so we dont divide by 0 when calculating
+        # emprical estimate
         self.num_pulls = 1
         self.curr_time = 0
         self.index = index
@@ -35,6 +36,10 @@ class InputModel(object):
 class IID_InputModel(InputModel):
 
     def __init__(self):
+        # by range, I mean the max possible cost or reward for a given arm.
+        # for example, for arm 0, it's costs can range from 0 to .1, and rewards from 0 to 1
+        # for arm 1, it's costs can range from 0 to .1, and rewards from 0 to 2
+        # the index in the lists correspond to arms with the same index
         self.cost_ranges = [.1, .1]
         self.reward_ranges = [1, 2]
         super(IID_InputModel, self).__init__()
@@ -48,6 +53,7 @@ class IID_InputModel(InputModel):
 
         costs = [0] * len(arms)
         rewards = [0] * len(arms)
+        # make the costs and rewards vectors for the new inputs
         for i in range(0, len(self.cost_ranges)):
             costs[i] = self.cost_ranges[i] * np.random.random_sample()
             rewards[i] = self.reward_ranges[i] * np.random.random_sample()
