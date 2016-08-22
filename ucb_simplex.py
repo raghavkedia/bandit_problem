@@ -1,5 +1,3 @@
-import numpy as np
-
 from models import (UCB, Arm, IID_InputModel)
 
 
@@ -15,33 +13,21 @@ class UCB_Simplex(UCB):
         time = 0
         while(self.total_cost <= self.budget):
             if time == 0:
+                # just pick the first arm at t = 0
                 max_arm = self.arms[0]
             else:
+                # get arm with highest ucb
                 max_arm = self.calc_max_UCB()
+
             max_arm.pull_arm()
+            # get the new inputs for all the arms
             self.update_arms()
+            # update total cost and total reward
             self.total_cost += max_arm.curr_cost
             self.total_reward += max_arm.curr_reward
             print 'total_cost: {0}, total_reward: {1}, arm_pulled: {2}'.format(
                 self.total_cost, self.total_reward, max_arm.index)
             time = time + 1
-
-    def update_arms(self):
-        costs, rewards = self.input_model.get_new_input(self.arms)
-
-        for i, arm in enumerate(self.arms):
-            arm.cost = ((arm.cost * arm.curr_time) +
-                        costs[i]) / (arm.curr_time + 1)
-
-            arm.reward = ((arm.reward * arm.curr_time) +
-                          rewards[i]) / (arm.curr_time + 1)
-
-            arm.curr_cost = costs[i]
-            arm.curr_reward = rewards[i]
-            arm.curr_time = arm.curr_time + 1
-
-        # print self.arms[0].cost
-        # print self.arms[0].reward
 
 
 inputs = IID_InputModel()

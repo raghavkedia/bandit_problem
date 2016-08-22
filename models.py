@@ -1,6 +1,7 @@
 import numpy as np
 
 
+# class for arm objects
 class Arm(object):
 
     def __init__(self, index):
@@ -8,6 +9,7 @@ class Arm(object):
         self.cost = 0
         self.curr_cost = 0
         self.curr_reward = 0
+        # I'm initializing to 1 just so we dont divide by 0 when calculating emprical estimate
         self.num_pulls = 1
         self.curr_time = 0
         self.index = index
@@ -20,13 +22,16 @@ class Arm(object):
         self.num_pulls = self.num_pulls + 1
 
 
+# Base class for all input models.
 class InputModel(object):
 
     # override for each input model
+    # This method should return two vectors: (costs, rewards)
     def get_new_input(self, arms):
         pass
 
 
+# Input model i'm using for testing
 class IID_InputModel(InputModel):
 
     def __init__(self):
@@ -50,12 +55,10 @@ class IID_InputModel(InputModel):
         return (costs, rewards)
 
 
+# Base class for all algorithms
 class Algorithm(object):
 
-    # need to figure out inputs to algorithms
-
     # each algorithm should have a set of arms
-    # should initialize all the arms
     def __init__(self, arms, input_model):
         self.arms = arms
         self.total_cost = 0
@@ -66,16 +69,22 @@ class Algorithm(object):
     def run(self):
         pass
 
-    # each algorithm needs to be able to pull the arm
-    def pull_arm(self, arm_index):
-        pass
-        # pull the arm
+    def update_arms(self):
+        costs, rewards = self.input_model.get_new_input(self.arms)
 
-    def update_arms(self, time):
-        pass
-        # update all the arms with new inputs
+        for i, arm in enumerate(self.arms):
+            arm.cost = ((arm.cost * arm.num_pulls) +
+                        costs[i]) / (arm.num_pulls + 1)
+
+            arm.reward = ((arm.reward * arm.num_pulls) +
+                          rewards[i]) / (arm.num_pulls + 1)
+
+            arm.curr_cost = costs[i]
+            arm.curr_reward = rewards[i]
+            arm.curr_time = arm.curr_time + 1
 
 
+# Base class for UCB algorithms
 class UCB(Algorithm):
 
     def calc_max_UCB(self):
