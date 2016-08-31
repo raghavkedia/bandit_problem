@@ -32,6 +32,12 @@ class InputModel(object):
         pass
 
 
+class InputModel_Bandit(object):
+
+    def get_new_input(self, arm):
+        pass
+
+
 # Input model i'm using for testing
 class IID_InputModel(InputModel):
 
