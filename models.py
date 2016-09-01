@@ -34,8 +34,29 @@ class InputModel(object):
 
 class InputModel_Bandit(object):
 
-    def get_new_input(self, arm):
+    def get_new_input(self, index):
         pass
+
+
+class IID_InputModel_Bandit(InputModel_Bandit):
+
+    def __init__(self):
+        self.reward_ranges = [5, 10]
+
+        # assume TWO resources
+        arm0_costs = [.1, .1]
+        arm1_costs = [.9, .9]
+
+        self.costs_ranges = [arm0_costs, arm1_costs]
+        super(IID_InputModel_Bandit, self).__init__()
+
+    def get_new_input(self, index):
+        reward = self.reward_ranges[index] * np.random.random_sample()
+        costs = []
+        for cost_range in self.costs_ranges[index]:
+            cost = cost_range * np.random.random_sample()
+            costs.append(cost)
+        return reward, costs
 
 
 # Input model i'm using for testing
