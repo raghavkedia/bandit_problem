@@ -1,6 +1,8 @@
 from models import (UCB, Arm, IID_InputModel)
 
 
+## MAKE BANDIT, ONLY UPDATE EMPIRICAL VALUE WHEN ARM IS PULLED
+
 class UCB_Simplex(UCB):
 
     def __init__(self, budget, arms, beta, input_model):
@@ -22,7 +24,6 @@ class UCB_Simplex(UCB):
             max_arm.pull_arm()
             # get the new inputs for all the arms
             self.update_arms()
-            # update total cost and total reward
             self.total_cost += max_arm.curr_cost
             self.total_reward += max_arm.curr_reward
             print 'total_cost: {0}, total_reward: {1}, arm_pulled: {2}'.format(

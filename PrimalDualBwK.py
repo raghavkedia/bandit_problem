@@ -65,7 +65,7 @@ class PrimalDualBwK(Algorithm):
     def update_arm(self, arm):
         # updates the current reward and current costs, and also updates the
         # expected reward and expected costs
-        reward, costs = self.input_model.get_new_input(arm.index)
+        reward, costs = self.input_model.get_new_input(arm)
         arm.curr_reward = reward
         arm.expected_reward = (
             (arm.expected_reward * (arm.num_pulls - 1)) + reward) / arm.num_pulls

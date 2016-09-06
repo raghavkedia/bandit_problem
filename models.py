@@ -4,7 +4,9 @@ import numpy as np
 # class for arm objects
 class Arm(object):
 
-    def __init__(self, index):
+    def __init__(self, index, reward_range, costs_ranges):
+        self.reward_range = reward_range
+        self.costs_ranges = costs_ranges
         self.reward = 0
         self.cost = 0
         self.curr_cost = 0
@@ -38,23 +40,39 @@ class InputModel_Bandit(object):
         pass
 
 
+# class IID_InputModel_Bandit(InputModel_Bandit):
+
+#     def __init__(self):
+#         self.reward_ranges = [5, 10]
+
+#         # assume TWO resources
+#         arm0_costs = [.1, .1]
+#         arm1_costs = [.9, .9]
+
+#         self.costs_ranges = [arm0_costs, arm1_costs]
+#         super(IID_InputModel_Bandit, self).__init__()
+
+#     def get_new_input(self, index):
+#         reward = self.reward_ranges[index] * np.random.random_sample()
+#         costs = []
+#         for cost_range in self.costs_ranges[index]:
+#             cost = cost_range * np.random.random_sample()
+#             costs.append(cost)
+#         return reward, costs
+
+
 class IID_InputModel_Bandit(InputModel_Bandit):
 
     def __init__(self):
-        self.reward_ranges = [5, 10]
-
-        # assume TWO resources
-        arm0_costs = [.1, .1]
-        arm1_costs = [.9, .9]
-
-        self.costs_ranges = [arm0_costs, arm1_costs]
         super(IID_InputModel_Bandit, self).__init__()
 
-    def get_new_input(self, index):
-        reward = self.reward_ranges[index] * np.random.random_sample()
+    def get_new_input(self, arm):
+        reward = arm.reward_range * np.random.normal(arm.reward_range, (1 / 4000), 1)[0]
+        reward = min(reward, 20) / 20
         costs = []
-        for cost_range in self.costs_ranges[index]:
-            cost = cost_range * np.random.random_sample()
+        for cost_range in arm.costs_ranges:
+            # fixed cost, not from distribution
+            cost = cost_range
             costs.append(cost)
         return reward, costs
 
@@ -102,19 +120,19 @@ class Algorithm(object):
     def run(self):
         pass
 
-    def update_arms(self):
-        costs, rewards = self.input_model.get_new_input(self.arms)
+    # ASSUMES ONLY ONE RESOURCE
+    def update_arm(self, arm):
+        reward, costs = self.input_model.get_new_input(arm)
 
-        for i, arm in enumerate(self.arms):
-            arm.cost = ((arm.cost * arm.num_pulls) +
-                        costs[i]) / (arm.num_pulls + 1)
+        arm.cost = ((arm.cost * arm.num_pulls) +
+                    costs[0]) / (arm.num_pulls + 1)
 
-            arm.reward = ((arm.reward * arm.num_pulls) +
-                          rewards[i]) / (arm.num_pulls + 1)
+        arm.reward = ((arm.reward * arm.num_pulls) +
+                      reward) / (arm.num_pulls + 1)
 
-            arm.curr_cost = costs[i]
-            arm.curr_reward = rewards[i]
-            arm.curr_time = arm.curr_time + 1
+        arm.curr_cost = costs[0]
+        arm.curr_reward = reward
+        arm.curr_time = arm.curr_time + 1
 
 
 # Base class for UCB algorithms
