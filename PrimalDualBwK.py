@@ -46,11 +46,13 @@ class PrimalDualBwK(Algorithm):
             self.update_resource_consumption(arm)
             self.total_reward += arm.curr_reward
             self.update_resource_vector(l)
-            self.print_arm_data()
-            print 'arm pulled: {0}'.format(arm.index)
-            print self.resource_consumtion_vector
-            print "------"
+            # self.print_arm_data()
+            # print 'arm pulled: {0}'.format(arm.index)
+            # print self.resource_consumtion_vector
+            # print "------"
             time += 1
+
+        return self.total_reward
 
     def print_arm_data(self):
         for arm in self.arms:
@@ -131,24 +133,25 @@ class PrimalDualBwK(Algorithm):
         A = []
         b = []
         for arm in self.arms:
-            A.append([x * -1 for x in arm.expected_cost_vector])
-            print arm.index
-            print arm.expected_cost_vector
-            b.append(-1 * arm.expected_reward)
-            print arm.expected_reward
-            print "-----"
+            A.append([max(x, .0001) * -1 for x in arm.expected_cost_vector])
+            # print arm.index
+            # print arm.expected_cost_vector
+            b.append(-1 * max(arm.expected_reward, .0001))
+            # print arm.expected_reward
+            # print "-----"
         bounds = []
         for i in range(0, len(self.resource_consumtion_vector)):
             bounds.append((0, None))
-        res = linprog(c, A_ub=A, b_ub=b, bounds=bounds)
-        print c
-        print A
-        print b
-        print res
+        res = linprog(c, A_ub=A, b_ub=b, bounds=bounds, options=dict(bland=True, tol=1e-8))
+        # print c
+        # print A
+        # print b
+        # # print res
+        # print res
         return res.x
 
-inputs = IID_InputModel_Bandit()
-arm_one = Arm(0)
-arm_two = Arm(1)
-bwk = PrimalDualBwK(2, 100, [arm_one, arm_two], inputs)
-bwk.run()
+# inputs = IID_InputModel_Bandit()
+# arm_one = Arm(0)
+# arm_two = Arm(1)
+# bwk = PrimalDualBwK(2, 100, [arm_one, arm_two], inputs)
+# bwk.run()

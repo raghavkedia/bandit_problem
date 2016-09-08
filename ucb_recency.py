@@ -14,7 +14,8 @@ class UCB_Recency(UCB):
 
     def run(self):
 
-        # these keep track of how much is spent between sampling and updating times
+        # these keep track of how much is spent between sampling and updating
+        # times
         curr_sample_cost = 0
         curr_update_cost = 0
 
@@ -22,9 +23,15 @@ class UCB_Recency(UCB):
 
         # start by randomly picking an arm
         curr_arm = self.sample_arm()
+        for arm in self.arms:
+            arm.pull_arm()
+            self.update_arm(arm)
+            # self.total_reward += arm.curr_reward
+            time += 1
 
+        curr_arm = self.calc_max_UCB()
         # arm with highest UCB, to be selected during update steps
-        max_arm = None
+        max_arm = curr_arm
 
         sampled = False
 
@@ -32,8 +39,8 @@ class UCB_Recency(UCB):
         s_rate = self.sampling_rate
         u_rate = self.update_rate
         while(self.total_cost <= self.budget):
-
-            # checks to see if last step was sampling, if so, then switch back to max arm
+            # checks to see if last step was sampling, if so, then switch back
+            # to max arm
             if sampled:
                 curr_arm = max_arm
 
@@ -57,7 +64,7 @@ class UCB_Recency(UCB):
             # pull the current arm
             curr_arm.pull_arm()
             # update all the arms with the new inputs
-            self.update_arms()
+            self.update_arm(curr_arm)
 
             # update the sampling costs and updating costs
             curr_sample_cost += curr_arm.curr_cost
@@ -66,9 +73,11 @@ class UCB_Recency(UCB):
             # update total cost and total reward
             self.total_cost += curr_arm.curr_cost
             self.total_reward += curr_arm.curr_reward
-            print 'total_cost: {0}, total_reward: {1}, arm_pulled: {2}'.format(
-                self.total_cost, self.total_reward, curr_arm.index)
+            # print 'total_cost: {0}, total_reward: {1}, arm_pulled: {2}'.format(
+            #     self.total_cost, self.total_reward, curr_arm.index)
             time = time + 1
+
+        return self.total_reward
 
     def reset_all_arms(self):
         for arm in self.arms:
@@ -82,8 +91,8 @@ class UCB_Recency(UCB):
         return np.random.choice(self.arms)
 
 
-inputs = IID_InputModel()
-arm_one = Arm(0)
-arm_two = Arm(1)
-recency = UCB_Recency(8, [arm_one, arm_two], 2, inputs)
-recency.run()
+# inputs = IID_InputModel()
+# arm_one = Arm(0)
+# arm_two = Arm(1)
+# recency = UCB_Recency(8, [arm_one, arm_two], 2, inputs)
+# recency.run()
