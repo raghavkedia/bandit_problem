@@ -1,4 +1,7 @@
+from __future__ import division
+
 from models import (UCB, Arm, IID_InputModel)
+import numpy as np
 
 
 # MAKE BANDIT, ONLY UPDATE EMPIRICAL VALUE WHEN ARM IS PULLED
@@ -18,11 +21,14 @@ class UCB_Simplex(UCB):
                 # just pick the first arm at t = 0
                 max_arm = self.arms[0]
             else:
+                pass
                 # get arm with highest ucb
-                max_arm = self.calc_max_UCB()
+                # max_arm = self.calc_max_UCB()
 
+            max_arm = self.arms[np.random.randint(0, 2)]
             max_arm.pull_arm()
             # get the new inputs for all the arms
+            self.input_model.update_states(self.arms)
             self.update_arm(max_arm)
             self.total_cost += max_arm.curr_cost
             self.total_reward += max_arm.curr_reward

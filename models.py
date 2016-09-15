@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 
 
@@ -124,18 +126,25 @@ class Markov_InputModel_Bandit(InputModel_Bandit):
         super(Markov_InputModel_Bandit, self).__init__()
 
     def get_new_input(self, arm):
-        new_state = np.random.choice(np.arange(
-            0, len(arm.state_distributions)), p=arm.state_transition_matrix[arm.state])
-        arm.state = new_state
-        distributions = arm.state_distributions[new_state]
-        reward = np.random.normal(distributions[0], (1. / 4000), 1)[0]
-        reward = max(0, min(reward, 20)) / 20
+        # new_state = np.random.choice(np.arange(
+        #     0, len(arm.state_distributions)), p=arm.state_transition_matrix[arm.state])
+        # arm.state = new_state
+        distributions = arm.state_distributions[arm.state]
+        # reward = np.random.normal(distributions[0], (1. / 4000), 1)[0]
+        # reward = max(0, min(reward, 20)) / 20
+        reward = distributions[0]
         costs = []
         for cost_range in distributions[1]:
             # fixed cost, not from distribution
             cost = cost_range
             costs.append(cost)
         return reward, costs
+
+    def update_states(self, arms):
+        for arm in arms:
+            new_state = np.random.choice(np.arange(
+                0, len(arm.state_distributions)), p=arm.state_transition_matrix[arm.state])
+            arm.state = new_state
 
 
 # Input model i'm using for testing
@@ -185,7 +194,6 @@ class Algorithm(object):
     # ASSUMES ONLY ONE RESOURCE
     def update_arm(self, arm):
         reward, costs = self.input_model.get_new_input(arm)
-
         arm.cost = ((arm.cost * arm.num_pulls) +
                     costs[0]) / (arm.num_pulls + 1)
 
@@ -219,9 +227,13 @@ class UCB(Algorithm):
             if ucb > max_UCB:
                 max_arm = arm
                 max_UCB = ucb
-
+        # print max_UCB
+        # print max_arm.index
         return max_arm
 
     def calc_UCB(self, arm):
-        numerator = arm.reward + (self.beta * arm.calc_e(self.time))
-        return numerator / arm.cost
+        if arm.cost == 0:
+            return 0
+        return arm.reward / arm.cost
+        # numerator = arm.reward + (self.beta * arm.calc_e(self.time))
+        # return numerator / arm.cost

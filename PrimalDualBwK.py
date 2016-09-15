@@ -1,6 +1,7 @@
+from __future__ import division
+
 import numpy as np
 from scipy.optimize import linprog
-
 from models import (Algorithm, Arm, IID_InputModel_Bandit)
 
 # make input model only return one cost and reward
@@ -14,7 +15,7 @@ class PrimalDualBwK(Algorithm):
         self.budget = budget
         # self.epsilon = np.sqrt(np.log(len(self.resource_vector)) / budget)
         self.epsilon = .0002
-        self.C_rad = np.log(num_resources * budget * len(arms))
+        self.C_rad = np.log(num_resources * budget * len(arms)) / 10
         for arm in arms:
             arm.curr_cost_vector = [0] * num_resources
             arm.expected_cost_vector = [0] * num_resources
@@ -42,6 +43,7 @@ class PrimalDualBwK(Algorithm):
             arm, l = self.calc_max_bpb()
             arm.pull_arm()
             # update estimated unit cost for each resource i
+            self.input_model.update_states(self.arms)
             self.update_arm(arm)
             self.update_resource_consumption(arm)
             self.total_reward += arm.curr_reward
@@ -51,6 +53,9 @@ class PrimalDualBwK(Algorithm):
             # print self.resource_consumtion_vector
             # print "------"
             time += 1
+            # print time
+            # print arm.index
+            # print "============"
 
         return self.total_reward
 
@@ -115,6 +120,14 @@ class PrimalDualBwK(Algorithm):
             est_cost = np.dot(l, self.resource_vector)
             bpb = u / est_cost
 
+
+            # print arm.index
+            # print arm.state
+            # print bpb
+            # print u
+            # print l
+            # print "-----"
+
             if i == 0:
                 max_arm = arm
                 max_bpb = bpb
@@ -126,6 +139,13 @@ class PrimalDualBwK(Algorithm):
                     max_bpb = bpb
                     max_l = l
 
+            if max_arm.index == 1 and max_arm.num_pulls == 30:
+                print max_arm.index
+                print u
+                print l
+                print "----"
+
+        # print max_arm.index
         return (max_arm, max_l)
 
     def solve_LP(self):
