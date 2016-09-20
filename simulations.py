@@ -20,29 +20,26 @@ def reset_all_arms(arms):
         arm.cost = 0
         arm.curr_cost = 0
         arm.curr_reward = 0
-        arm.num_pulls = 1
+        arm.num_pulls = 0
         arm.state = 0
 
 
 def run_simulations(arms, input_model, max_cost):
     results = []
     for budget in range(100000, 100001):
-        simplex = UCB_Simplex(budget / max_cost, arms, 2, input_model)
+        simplex = UCB_Simplex(budget / max_cost, arms, .1, input_model)
         simplex_reward = simplex.run()
         reset_all_arms(arms)
 
-        # # # # for arm in arms:
-        # # # #     print arm.state
+        # recency = UCB_Recency(budget / max_cost, arms, .1, input_model)
+        # recency_reward = recency.run()
+        # reset_all_arms(arms)
 
-        recency = UCB_Recency(budget / max_cost, arms, 2, input_model)
-        recency_reward = recency.run()
-        reset_all_arms(arms)
+        # bwk = PrimalDualBwK(1, budget / max_cost, arms, input_model)
+        # bwk_reward = bwk.run()
+        # reset_all_arms(arms)
 
-        bwk = PrimalDualBwK(1, budget / max_cost, arms, input_model)
-        bwk_reward = bwk.run()
-        reset_all_arms(arms)
-
-        result = [budget / max_cost, simplex_reward, recency_reward, bwk_reward]
+        result = [budget / max_cost, simplex_reward]
         # recency_reward, bwk_reward]
         print result
         results.append(result)
@@ -158,11 +155,15 @@ def make_plots(results, titles):
 # state_transition_one = [[.5, .5], [.5, .5]]
 # arm_one = Markov_Arm(0, 0, state_dist_one, state_transition_one)
 
+def cost_func(reward):
+    return [1]
+
 state_dist_one = [[0, [1]], [1, [0]], [0.1, [1]]]
 state_transition_one = [[.99, .01, 0], [0, .999, .001], [0, 0, 1]]
 arm_one = Markov_Arm(0, 0, state_dist_one, state_transition_one)
 
-state_dist_two = [[0.01, [1]], [1, [0.1]]]
+# state_dist_two = [[0.01, [1]], [1, [1]]]
+state_dist_two = [[0.01, cost_func], [1, cost_func]]
 state_transition_two = [[.999, .001], [0, 1]]
 arm_two = Markov_Arm(1, 0, state_dist_two, state_transition_two)
 

@@ -14,19 +14,18 @@ class Arm(object):
         self.curr_cost = 0
         self.curr_reward = 0
         # I'm initializing to 1 just so we dont divide by 0 when calculating
-        # emprical estimate
         self.num_pulls = 1
         self.curr_time = 0
         self.index = index
 
-    # need to figure out what e stands for
+    # From the confidence interval
     def calc_e(self, time):
         return np.sqrt((2 * np.log(time)) / self.num_pulls)
 
     def pull_arm(self):
         self.num_pulls = self.num_pulls + 1
 
-
+# For these arms, there is a probability on whether theres a reward OR a cost
 class Probability_Arm(Arm):
 
     def __init__(self, index, probability, reward_range, costs_ranges):
@@ -34,6 +33,8 @@ class Probability_Arm(Arm):
         super(Probability_Arm, self).__init__(index=index,
                                               reward_range=reward_range, costs_ranges=costs_ranges)
 
+# make a new markov arm that takes in a reward and a function in the state distributions matrix.
+# add comments of different arms and input models
 
 class Markov_Arm(Arm):
 
@@ -53,34 +54,12 @@ class InputModel(object):
     def get_new_input(self, arms):
         pass
 
-
-class InputModel_Bandit(object):
-
-    def get_new_input(self, arm):
+    # override for each input model
+    # This method should make all the necessary updates to the current arm being pulled, and all the other arms. 
+    def update_arms(self, curr_arm, arms):
         pass
 
-
-# class IID_InputModel_Bandit(InputModel_Bandit):
-
-#     def __init__(self):
-#         self.reward_ranges = [5, 10]
-
-#         # assume TWO resources
-#         arm0_costs = [.1, .1]
-#         arm1_costs = [.9, .9]
-
-#         self.costs_ranges = [arm0_costs, arm1_costs]
-#         super(IID_InputModel_Bandit, self).__init__()
-
-#     def get_new_input(self, index):
-#         reward = self.reward_ranges[index] * np.random.random_sample()
-#         costs = []
-#         for cost_range in self.costs_ranges[index]:
-#             cost = cost_range * np.random.random_sample()
-#             costs.append(cost)
-#         return reward, costs
-
-
+# IID input model fo bandit, only use with IID arms
 class IID_InputModel_Bandit(InputModel_Bandit):
 
     def __init__(self):
@@ -96,7 +75,7 @@ class IID_InputModel_Bandit(InputModel_Bandit):
             costs.append(cost)
         return reward, costs
 
-
+# Only use for Probability Arms
 class Probability_InputModel_Bandit(InputModel_Bandit):
 
     # ONLY INTENDED FOR PROBABILITY ARMS
@@ -119,35 +98,54 @@ class Probability_InputModel_Bandit(InputModel_Bandit):
                 costs.append(cost)
             return 0, costs
 
-
+# Only use for Markov Arms
 class Markov_InputModel_Bandit(InputModel_Bandit):
 
     def __init__(self):
         super(Markov_InputModel_Bandit, self).__init__()
 
-    def get_new_input(self, arm):
-        # new_state = np.random.choice(np.arange(
-        #     0, len(arm.state_distributions)), p=arm.state_transition_matrix[arm.state])
-        # arm.state = new_state
+    def _get_new_input(self, arm):
         distributions = arm.state_distributions[arm.state]
         # reward = np.random.normal(distributions[0], (1. / 4000), 1)[0]
         # reward = max(0, min(reward, 20)) / 20
         reward = distributions[0]
-        costs = []
-        for cost_range in distributions[1]:
-            # fixed cost, not from distribution
-            cost = cost_range
-            costs.append(cost)
+
+        # check if there's a function for the costs
+        if callable(distributions[1]):
+            costs = distributions[1](reward)
+        else:
+            costs = []
+            for cost_range in distributions[1]:
+                # fixed cost, not from distribution
+                cost = cost_range
+                costs.append(cost)
+        
         return reward, costs
 
-    def update_states(self, arms):
+    def update_arms(self, curr_arm, arms):
+        self._update_states(arms)
+        self._update_arm(curr_arm)
+
+    def _update_arm(self, arm):
+        reward, costs = self._get_new_input(arm)
+        arm.cost = ((arm.cost * arm.num_pulls) +
+                    costs[0]) / (arm.num_pulls + 1)
+
+        arm.reward = ((arm.reward * arm.num_pulls) +
+                      reward) / (arm.num_pulls + 1)
+
+        arm.curr_cost = costs[0]
+        arm.curr_reward = reward
+        arm.curr_time = arm.curr_time + 1
+
+    def _update_states(self, arms):
         for arm in arms:
             new_state = np.random.choice(np.arange(
                 0, len(arm.state_distributions)), p=arm.state_transition_matrix[arm.state])
             arm.state = new_state
 
 
-# Input model i'm using for testing
+# Only use with IID arms, not bandit setting. Used for testing
 class IID_InputModel(InputModel):
 
     def __init__(self):
@@ -191,32 +189,13 @@ class Algorithm(object):
     def run(self):
         pass
 
-    # ASSUMES ONLY ONE RESOURCE
-    def update_arm(self, arm):
-        reward, costs = self.input_model.get_new_input(arm)
-        arm.cost = ((arm.cost * arm.num_pulls) +
-                    costs[0]) / (arm.num_pulls + 1)
-
-        arm.reward = ((arm.reward * arm.num_pulls) +
-                      reward) / (arm.num_pulls + 1)
-
-        arm.curr_cost = costs[0]
-        arm.curr_reward = reward
-        arm.curr_time = arm.curr_time + 1
-
-    def reset_arms(self):
-        for arm in self.arms:
-            arm.reward = 0
-            arm.cost = 0
-            arm.curr_cost = 0
-            arm.curr_reward = 0
-            # I'm initializing to 1 just so we dont divide by 0 when calculating
-            # emprical estimate
-            arm.num_pulls = 1
-            arm.curr_time = 0
+    def update_stats(self, arm):
+        self.total_cost += arm.curr_cost
+        self.total_reward += arm.curr_reward
 
 
-# Base class for UCB algorithms
+
+# Base class for UCB algorithms (Simplex and Recency)
 class UCB(Algorithm):
 
     def calc_max_UCB(self):
@@ -227,13 +206,9 @@ class UCB(Algorithm):
             if ucb > max_UCB:
                 max_arm = arm
                 max_UCB = ucb
-        # print max_UCB
-        # print max_arm.index
         return max_arm
 
     def calc_UCB(self, arm):
-        if arm.cost == 0:
-            return 0
-        return arm.reward / arm.cost
-        # numerator = arm.reward + (self.beta * arm.calc_e(self.time))
-        # return numerator / arm.cost
+        beta = 1 + (1 / (self.lam))
+        numerator = arm.reward + (beta * arm.calc_e(self.time))
+        return numerator / arm.cost

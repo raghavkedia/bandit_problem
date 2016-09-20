@@ -4,42 +4,47 @@ from models import (UCB, Arm, IID_InputModel)
 import numpy as np
 
 
-# MAKE BANDIT, ONLY UPDATE EMPIRICAL VALUE WHEN ARM IS PULLED
+# Make input model independent of algo (markov)
 
 class UCB_Simplex(UCB):
 
-    def __init__(self, budget, arms, beta, input_model):
+    def __init__(self, budget, arms, lam, input_model):
         self.budget = budget
-        self.beta = beta
+        # Lambda is a lower bound on average resource consumtion
+        self.lam = lam
         super(UCB_Simplex, self).__init__(arms, input_model)
 
     # should override run method
     def run(self):
-        self.time = 0
+
+        # Initialization Step
+        # Use this for recency also! 
+        self.time = 1
+        initialized = False
+        while(not initialized):
+            
+            count = 0
+            for arm in self.arms:
+                if arm.cost == 0:
+                    arm.pull_arm()
+                    self.input_model.update_arms(arm, self.arms)
+                    self.update_stats(arm)
+                else:
+                    count += 1
+
+            if count == 2:
+                initialized = True
+
+            count = 0
+            self.time = self.time + 1
+
         while(self.total_cost <= self.budget):
-            if self.time == 0:
-                # just pick the first arm at t = 0
-                max_arm = self.arms[0]
-            else:
-                pass
-                # get arm with highest ucb
-                max_arm = self.calc_max_UCB()
+            max_arm = self.calc_max_UCB()
 
             max_arm.pull_arm()
-            # get the new inputs for all the arms
-            self.input_model.update_states(self.arms)
-            self.update_arm(max_arm)
-            self.total_cost += max_arm.curr_cost
-            self.total_reward += max_arm.curr_reward
-            # print 'total_cost: {0}, total_reward: {1}, arm_pulled: {2}'.format(
-            #     self.total_cost, self.total_reward, max_arm.index)
+            # get the new inputs for all the arms, update the current arm being pulled
+            self.input_model.update_arms(max_arm, self.arms)
+            self.update_stats(max_arm)
             self.time = self.time + 1
 
         return self.total_reward
-
-
-# inputs = IID_InputModel()
-# arm_one = Arm(0)
-# arm_two = Arm(1)
-# simplex = UCB_Simplex(50, [arm_one, arm_two], 2, inputs)
-# simplex.run()
