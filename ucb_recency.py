@@ -52,7 +52,7 @@ class UCB_Recency(UCB):
                 sampled = True
                 # reset sampling rate
                 curr_sample_budget = np.random.exponential(scale=(1. / self.sampling_rate))
-                curr_sample_budget = 5
+                # curr_sample_budget = 5
 
             # update time
             elif curr_update_budget <= 0:
@@ -61,7 +61,7 @@ class UCB_Recency(UCB):
                 self.reset_all_arms()
                 # reset updating rate
                 curr_update_budget = np.random.exponential(scale=(1. / self.update_rate))
-                curr_update_budget = 20
+                # curr_update_budget = 20
 
             # pull the current arm
             curr_arm.pull_arm()

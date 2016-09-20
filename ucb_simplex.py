@@ -23,9 +23,8 @@ class UCB_Simplex(UCB):
             else:
                 pass
                 # get arm with highest ucb
-                # max_arm = self.calc_max_UCB()
+                max_arm = self.calc_max_UCB()
 
-            max_arm = self.arms[np.random.randint(0, 2)]
             max_arm.pull_arm()
             # get the new inputs for all the arms
             self.input_model.update_states(self.arms)
