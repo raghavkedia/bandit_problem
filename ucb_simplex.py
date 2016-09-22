@@ -25,7 +25,7 @@ class UCB_Simplex(UCB):
             
             count = 0
             for arm in self.arms:
-                if arm.cost == 0:
+                if arm.expected_costs[0] == 0:
                     arm.pull_arm()
                     self.input_model.update_arms(arm, self.arms)
                     self.update_stats(arm)
@@ -40,7 +40,6 @@ class UCB_Simplex(UCB):
 
         while(self.total_cost <= self.budget):
             max_arm = self.calc_max_UCB()
-
             max_arm.pull_arm()
             # get the new inputs for all the arms, update the current arm being pulled
             self.input_model.update_arms(max_arm, self.arms)

@@ -4,21 +4,22 @@ import matplotlib.pyplot as plt
 from PrimalDualBwK import PrimalDualBwK
 from ucb_simplex import UCB_Simplex
 from ucb_recency import UCB_Recency
-from models import (IID_InputModel_Bandit, Markov_InputModel_Bandit,
+from models import (Markov_InputModel_Bandit,
                     Probability_InputModel_Bandit, Arm, Probability_Arm, Markov_Arm)
 
-inputs = IID_InputModel_Bandit()
+# inputs = IID_InputModel_Bandit()
 
 probability_input_model = Probability_InputModel_Bandit()
 
 markov_input_model = Markov_InputModel_Bandit()
 
 
+# resets all the arms, so they can be fed into another algorithm
 def reset_all_arms(arms):
     for arm in arms:
-        arm.reward = 0
-        arm.cost = 0
-        arm.curr_cost = 0
+        arm.expected_reward = 0
+        arm.expected_costs = [0]
+        arm.curr_costs = [0]
         arm.curr_reward = 0
         arm.num_pulls = 0
         arm.state = 0
@@ -31,15 +32,15 @@ def run_simulations(arms, input_model, max_cost):
         simplex_reward = simplex.run()
         reset_all_arms(arms)
 
-        # recency = UCB_Recency(budget / max_cost, arms, .1, input_model)
-        # recency_reward = recency.run()
-        # reset_all_arms(arms)
+        recency = UCB_Recency(budget / max_cost, arms, .1, input_model)
+        recency_reward = recency.run()
+        reset_all_arms(arms)
 
-        # bwk = PrimalDualBwK(1, budget / max_cost, arms, input_model)
-        # bwk_reward = bwk.run()
-        # reset_all_arms(arms)
+        bwk = PrimalDualBwK(1, budget / max_cost, .1, arms, input_model)
+        bwk_reward = bwk.run()
+        reset_all_arms(arms)
 
-        result = [budget / max_cost, simplex_reward]
+        result = [budget / max_cost, simplex_reward, recency_reward, bwk_reward]
         # recency_reward, bwk_reward]
         print result
         results.append(result)
@@ -158,13 +159,13 @@ def make_plots(results, titles):
 def cost_func(reward):
     return [1]
 
-state_dist_one = [[0, [1]], [1, [0]], [0.1, [1]]]
-state_transition_one = [[.99, .01, 0], [0, .999, .001], [0, 0, 1]]
+state_dist_one = [[1, [.0001]], [0.1, [1]]]
+state_transition_one = [[.9999, .0001], [.0001, .9999]]
 arm_one = Markov_Arm(0, 0, state_dist_one, state_transition_one)
 
-# state_dist_two = [[0.01, [1]], [1, [1]]]
-state_dist_two = [[0.01, cost_func], [1, cost_func]]
-state_transition_two = [[.999, .001], [0, 1]]
+state_dist_two = [[0.01, [1]], [1, [1]]]
+# state_dist_two = [[0.01, cost_func], [1, cost_func]]
+state_transition_two = [[.9999, .0001], [0.0001, .9999]]
 arm_two = Markov_Arm(1, 0, state_dist_two, state_transition_two)
 
 # BWK DOES BETTER

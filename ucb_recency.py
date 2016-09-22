@@ -7,6 +7,7 @@ from models import (UCB)
 class UCB_Recency(UCB):
 
     def __init__(self, budget, arms, lam, input_model):
+        self.discount_factor = .0001
         self.budget = budget
         self.lam = lam
         self.sampling_rate = np.power(budget, -(1. / 3.)) / len(arms)
@@ -22,7 +23,7 @@ class UCB_Recency(UCB):
 
             count = 0
             for arm in self.arms:
-                if arm.cost == 0:
+                if arm.expected_costs[0] == 0:
                     arm.pull_arm()
                     self.input_model.update_arms(arm, self.arms)
                     self.update_stats(arm)
@@ -67,8 +68,8 @@ class UCB_Recency(UCB):
             self.input_model.update_arms(curr_arm, self.arms)
 
             # update the sampling costs and updating costs
-            curr_sample_budget -= curr_arm.curr_cost
-            curr_update_budget -= curr_arm.curr_cost
+            curr_sample_budget -= curr_arm.curr_costs[0]
+            curr_update_budget -= curr_arm.curr_costs[0]
 
             # update total cost and total reward
             self.update_stats(curr_arm)
@@ -79,12 +80,12 @@ class UCB_Recency(UCB):
 
     def reset_all_arms(self):
         for arm in self.arms:
-            arm.reward = 0
-            arm.cost = 0
-            arm.curr_cost = 0
+            arm.expected_reward = arm.expected_reward * self.discount_factor
+            arm.expected_costs[0] = arm.expected_costs[0] * self.discount_factor
+            arm.curr_costs = [0]
             arm.curr_reward = 0
             arm.num_pulls = 1
 
     def sample_arm(self):
-        return self.arms[np.random.randint(0, 2)]
+        return self.arms[np.random.randint(0, len(self.arms))]
 

@@ -2,6 +2,7 @@ from __future__ import division
 
 import numpy as np
 
+'''ARM MODELS'''
 
 # class for arm objects
 class Arm(object):
@@ -9,9 +10,9 @@ class Arm(object):
     def __init__(self, index, reward_range=None, costs_ranges=None):
         self.reward_range = reward_range
         self.costs_ranges = costs_ranges
-        self.reward = 0
-        self.cost = 0
-        self.curr_cost = 0
+        self.expected_reward = 0
+        self.expected_costs = [0]
+        self.curr_costs = [0]
         self.curr_reward = 0
         # I'm initializing to 1 just so we dont divide by 0 when calculating
         self.num_pulls = 1
@@ -46,6 +47,8 @@ class Markov_Arm(Arm):
             index=index, reward_range=None, costs_ranges=None)
 
 
+'''Input Models'''
+
 # Base class for all input models.
 class InputModel(object):
 
@@ -59,21 +62,26 @@ class InputModel(object):
     def update_arms(self, curr_arm, arms):
         pass
 
+class InputModel_Bandit(InputModel):
+
+    def get_new_input(self, arms):
+        pass
+
 # IID input model fo bandit, only use with IID arms
-class IID_InputModel_Bandit(InputModel_Bandit):
+# class IID_InputModel_Bandit(InputModel_Bandit):
 
-    def __init__(self):
-        super(IID_InputModel_Bandit, self).__init__()
+#     def __init__(self):
+#         super(IID_InputModel_Bandit, self).__init__()
 
-    def get_new_input(self, arm):
-        reward = np.random.normal(arm.reward_range, (1. / 4000), 1)[0]
-        reward = max(0, min(reward, 20)) / 20
-        costs = []
-        for cost_range in arm.costs_ranges:
-            # fixed cost, not from distribution
-            cost = cost_range
-            costs.append(cost)
-        return reward, costs
+#     def get_new_input(self, arm):
+#         reward = np.random.normal(arm.reward_range, (1. / 4000), 1)[0]
+#         reward = max(0, min(reward, 20)) / 20
+#         costs = []
+#         for cost_range in arm.costs_ranges:
+#             # fixed cost, not from distribution
+#             cost = cost_range
+#             costs.append(cost)
+#         return reward, costs
 
 # Only use for Probability Arms
 class Probability_InputModel_Bandit(InputModel_Bandit):
@@ -128,13 +136,16 @@ class Markov_InputModel_Bandit(InputModel_Bandit):
 
     def _update_arm(self, arm):
         reward, costs = self._get_new_input(arm)
-        arm.cost = ((arm.cost * arm.num_pulls) +
-                    costs[0]) / (arm.num_pulls + 1)
+        # arm.cost = ((arm.cost * (arm.num_pulls - 1)) +
+        #             costs[0]) / (arm.num_pulls)
 
-        arm.reward = ((arm.reward * arm.num_pulls) +
-                      reward) / (arm.num_pulls + 1)
+        arm.expected_reward = ((arm.expected_reward * (arm.num_pulls - 1)) +
+                      reward) / (arm.num_pulls)
 
-        arm.curr_cost = costs[0]
+        for i, cost in enumerate(costs):
+            arm.expected_costs[i] = ((arm.expected_costs[i] * (arm.num_pulls - 1)) + cost) / (arm.num_pulls)
+
+        arm.curr_costs = costs
         arm.curr_reward = reward
         arm.curr_time = arm.curr_time + 1
 
@@ -174,6 +185,8 @@ class IID_InputModel(InputModel):
         return (costs, rewards)
 
 
+'''Algorithm Models'''
+
 # Base class for all algorithms
 class Algorithm(object):
 
@@ -190,7 +203,7 @@ class Algorithm(object):
         pass
 
     def update_stats(self, arm):
-        self.total_cost += arm.curr_cost
+        self.total_cost += arm.curr_costs[0]
         self.total_reward += arm.curr_reward
 
 
@@ -210,5 +223,5 @@ class UCB(Algorithm):
 
     def calc_UCB(self, arm):
         beta = 1 + (1 / (self.lam))
-        numerator = arm.reward + (beta * arm.calc_e(self.time))
-        return numerator / arm.cost
+        numerator = arm.expected_reward + (beta * arm.calc_e(self.time))
+        return numerator / arm.expected_costs[0]
