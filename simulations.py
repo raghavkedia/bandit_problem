@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from PrimalDualBwK import PrimalDualBwK
 from ucb_simplex import UCB_Simplex
 from ucb_recency import UCB_Recency
+from opt_algo import OPT
 from models import (Markov_InputModel_Bandit, Markov_Arm)
 
 
@@ -28,26 +29,32 @@ def run_simulations(arms, input_model, max_cost, min_budget, max_budget, budget_
 
         print budget
 
-        simplex = UCB_Simplex(budget / max_cost, arms, .001, input_model)
+        opt = OPT(budget / max_cost, arms, input_model)
+        index, opt_reward = opt.run()
+        reset_all_arms(arms)
+
+        print opt_reward
+
+        simplex = UCB_Simplex(budget / max_cost, arms, .1, input_model)
         simplex_reward = simplex.run()
         reset_all_arms(arms)
 
         print simplex_reward
 
-        recency = UCB_Recency(budget / max_cost, arms, .001, input_model)
+        recency = UCB_Recency(budget / max_cost, arms, .1, input_model)
         recency_reward = recency.run()
         reset_all_arms(arms)
 
         print recency_reward
 
-        bwk = PrimalDualBwK(1, budget / max_cost, .001, arms, input_model)
-        bwk_reward = bwk.run()
-        reset_all_arms(arms)
+        # bwk = PrimalDualBwK(1, budget / max_cost, .1, arms, input_model)
+        # bwk_reward = bwk.run()
+        # reset_all_arms(arms)
 
-        print bwk_reward
+        # print bwk_reward
         print "====="
-        result = [budget / max_cost, simplex_reward,
-                  recency_reward, bwk_reward]
+        result = [budget / max_cost, opt_reward - simplex_reward,
+                  opt_reward - recency_reward]
         results.append(result)
 
     return results
@@ -63,16 +70,16 @@ def make_plots(results, titles):
     plt.tick_params(labelcolor='none', top='off',
                     bottom='off', left='off', right='off')
     plt.xlabel("Budget")
-    plt.ylabel("Total Reward")
+    plt.ylabel("Total Regret")
 
     for i, result in enumerate(results):
         x = zip(*result)[0]
         simplex = zip(*result)[1]
         recency = zip(*result)[2]
-        bwk = zip(*result)[3]
+        # bwk = zip(*result)[3]
         axarr[i].plot(x, simplex, 'rs-', label="Simplex")
         axarr[i].plot(x, recency, 'go-', label="Recency")
-        axarr[i].plot(x, bwk, 'yd-', label="BwK")
+        # axarr[i].plot(x, bwk, 'yd-', label="BwK")
         # axarr[0].ylabel('Total Reward')
         # axarr[0].xlabel('Budget')
         axarr[i].set_title(titles[i])
@@ -162,7 +169,7 @@ arm_four = Markov_Arm(3, 0, state_dist_four, state_transition_four)
 
 arms = [arm_one, arm_two, arm_three, arm_four]
 
-result_A = run_simulations(arms, markov_input_model, 1, 10000, 100000, 10000)
+# result_A = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
 
 # Simulation B
 
@@ -176,14 +183,54 @@ arm_two = Markov_Arm(1, 0, state_dist_two, state_transition_two)
 
 arms = [arm_one, arm_two]
 
-result_B = run_simulations(arms, markov_input_model, 1, 10000, 10001, 10000)
+# result_B = run_simulations(arms, markov_input_model, 1, 10000, 10001, 10000)
+
+# Simulation C
+
+state_dist_one = [[.5, [.5]], [0.5, [.5]]]
+state_transition_one = [[1, 0], [1, 0]]
+arm_one = Markov_Arm(0, 0, state_dist_one, state_transition_one)
+
+state_dist_two = [[0.1, [1]], [1, [.1]]]
+state_transition_two = [[.9999, .0001], [0, 1]]
+arm_two = Markov_Arm(1, 0, state_dist_two, state_transition_two)
+
+arms = [arm_one, arm_two]
+
+result_C = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
+
+# Simulation D
+
+state_dist_one = [[.5, [.5]], [0.5, [.5]]]
+state_transition_one = [[1, 0], [1, 0]]
+arm_one = Markov_Arm(0, 0, state_dist_one, state_transition_one)
+
+state_dist_two = [[0.1, [1]], [0.9, [.1]]]
+state_transition_two = [[.999, .001], [0.01, .99]]
+arm_two = Markov_Arm(1, 0, state_dist_two, state_transition_two)
+
+arms = [arm_one, arm_two]
+
+# result_D = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
+
+# Simulation E
+
+state_dist_one = [[.5, [.5]], [0.5, [.5]]]
+state_transition_one = [[1, 0], [1, 0]]
+arm_one = Markov_Arm(0, 0, state_dist_one, state_transition_one)
+
+state_dist_two = [[0.1, [1]], [1.5, [.1]]]
+state_transition_two = [[.999, .001], [0.05, .95]]
+arm_two = Markov_Arm(1, 0, state_dist_two, state_transition_two)
+
+# result_E = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
 
 # Print results here
 
 # pass each result into this array to be printed. Each result will
 # correspond to a different graph.
-results = [result_A, result_B]
+results = [result_C, result_C]
 # title of each graph
-titles = ['Simulation A', 'Simulation B']
+titles = ['Simulation C', 'Simulation C']
 
 make_plots(results, titles)

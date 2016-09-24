@@ -223,8 +223,10 @@ class UCB(Algorithm):
     def calc_max_UCB(self):
         max_arm = self.arms[0]
         max_UCB = self.calc_UCB(self.arms[0])
-        for arm in self.arms[1:]:
+        for arm in self.arms:
             ucb = self.calc_UCB(arm)
+            # print arm.index
+            # print ucb
             if ucb > max_UCB:
                 max_arm = arm
                 max_UCB = ucb
