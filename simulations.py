@@ -29,6 +29,7 @@ def run_simulations(arms, input_model, max_cost, min_budget, max_budget, budget_
 
         print budget
 
+        # Comment out the below three lines if you do not want regret, and just want reward. 
         opt = OPT(budget / max_cost, arms, input_model)
         index, opt_reward = opt.run()
         reset_all_arms(arms)
@@ -53,6 +54,9 @@ def run_simulations(arms, input_model, max_cost, min_budget, max_budget, budget_
 
         # print bwk_reward
         print "====="
+
+        # NOTE: This will print the regret. If you want to print total_reward, 
+        # remove the subtraction from the opt_reward. 
         result = [budget / max_cost, opt_reward - simplex_reward,
                   opt_reward - recency_reward]
         results.append(result)
@@ -70,6 +74,7 @@ def make_plots(results, titles):
     plt.tick_params(labelcolor='none', top='off',
                     bottom='off', left='off', right='off')
     plt.xlabel("Budget")
+    # RENAME TO TOTAL REWARD IF YOU WANT TO PLOT REWARD
     plt.ylabel("Total Regret")
 
     for i, result in enumerate(results):
