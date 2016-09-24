@@ -116,6 +116,7 @@ class Markov_InputModel_Bandit(InputModel_Bandit):
         distributions = arm.state_distributions[arm.state]
         # reward = np.random.normal(distributions[0], (1. / 4000), 1)[0]
         # reward = max(0, min(reward, 20)) / 20
+        # NOTE: right now we're just taking an exact value. Modify this to make it pull from a distribution
         reward = distributions[0]
 
         # check if there's a function for the costs
@@ -127,7 +128,6 @@ class Markov_InputModel_Bandit(InputModel_Bandit):
                 # fixed cost, not from distribution
                 cost = cost_range
                 costs.append(cost)
-        
         return reward, costs
 
     def update_arms(self, curr_arm, arms):
@@ -139,8 +139,7 @@ class Markov_InputModel_Bandit(InputModel_Bandit):
         # arm.cost = ((arm.cost * (arm.num_pulls - 1)) +
         #             costs[0]) / (arm.num_pulls)
 
-        arm.expected_reward = ((arm.expected_reward * (arm.num_pulls - 1)) +
-                      reward) / (arm.num_pulls)
+        arm.expected_reward = ((arm.expected_reward * (arm.num_pulls - 1)) + reward) / (arm.num_pulls)
 
         for i, cost in enumerate(costs):
             arm.expected_costs[i] = ((arm.expected_costs[i] * (arm.num_pulls - 1)) + cost) / (arm.num_pulls)
@@ -210,6 +209,16 @@ class Algorithm(object):
 
 # Base class for UCB algorithms (Simplex and Recency)
 class UCB(Algorithm):
+
+    def calc_max_reward_over_cost(self):
+        max_arm = self.arms[0]
+        max_roc = max_arm.expected_reward / max_arm.expected_costs[0]
+        for arm in self.arms[1:]:
+            roc = arm.expected_reward / arm.expected_costs[0]
+            if roc > max_roc:
+                max_arm = arm
+                max_roc = roc
+        return max_arm
 
     def calc_max_UCB(self):
         max_arm = self.arms[0]

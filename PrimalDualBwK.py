@@ -5,7 +5,6 @@ from scipy.optimize import linprog
 from models import (Algorithm, Arm)
 
 
-
 class PrimalDualBwK(Algorithm):
 
     def __init__(self, num_resources, budget, lam, arms, input_model):
@@ -15,7 +14,7 @@ class PrimalDualBwK(Algorithm):
         self.budget = budget
         # self.epsilon = np.sqrt(np.log(num_resources) / budget)
         self.epsilon = np.sqrt(1 / budget)
-        self.C_rad = np.log(num_resources * (budget/lam) * len(arms))
+        self.C_rad = np.log(num_resources * (budget / lam) * len(arms))
         for arm in arms:
             arm.curr_costs = [0] * num_resources
             arm.expected_costs = [0] * num_resources
@@ -118,5 +117,6 @@ class PrimalDualBwK(Algorithm):
         bounds = []
         for i in range(0, len(self.resource_consumtion_vector)):
             bounds.append((0, None))
-        res = linprog(c, A_ub=A, b_ub=b, bounds=bounds, options=dict(bland=True, tol=1e-8))
+        res = linprog(c, A_ub=A, b_ub=b, bounds=bounds,
+                      options=dict(bland=True, tol=1e-8))
         return res.x

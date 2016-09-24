@@ -1,7 +1,7 @@
 from __future__ import division
 
 import numpy as np
-from models import (UCB)
+from models import UCB
 
 
 class UCB_Recency(UCB):
@@ -30,17 +30,17 @@ class UCB_Recency(UCB):
                 else:
                     count += 1
 
-            if count == 2:
+            if count == len(self.arms):
                 initialized = True
             count = 0
 
         curr_arm = self.calc_max_UCB()
         max_arm = curr_arm
         sampled = False
-        
+
         curr_sample_budget = np.random.exponential(scale=1. / self.sampling_rate)
         curr_update_budget = np.random.exponential(scale=1. / self.update_rate)
-       
+
         while(self.total_cost <= self.budget):
             # checks to see if last step was sampling, if so, then switch back
             # to max arm
@@ -49,18 +49,20 @@ class UCB_Recency(UCB):
 
             # sampling time
             if curr_sample_budget <= 0:
-                curr_arm = self.sample_arm()
+                curr_arm = self.calc_max_UCB()
                 sampled = True
                 # reset sampling rate
-                curr_sample_budget = np.random.exponential(scale=(1. / self.sampling_rate))
+                curr_sample_budget = np.random.exponential(
+                    scale=(1. / self.sampling_rate))
 
             # update time
             elif curr_update_budget <= 0:
-                curr_arm = self.calc_max_UCB()
+                curr_arm = self.calc_max_reward_over_cost()
                 max_arm = curr_arm
                 self.reset_all_arms()
                 # reset updating rate
-                curr_update_budget = np.random.exponential(scale=(1. / self.update_rate))
+                curr_update_budget = np.random.exponential(
+                    scale=(1. / self.update_rate))
 
             # pull the current arm
             curr_arm.pull_arm()
@@ -81,11 +83,11 @@ class UCB_Recency(UCB):
     def reset_all_arms(self):
         for arm in self.arms:
             arm.expected_reward = arm.expected_reward * self.discount_factor
-            arm.expected_costs[0] = arm.expected_costs[0] * self.discount_factor
+            arm.expected_costs[0] = arm.expected_costs[
+                0] * self.discount_factor
             arm.curr_costs = [0]
             arm.curr_reward = 0
             arm.num_pulls = 1
 
     def sample_arm(self):
         return self.arms[np.random.randint(0, len(self.arms))]
-
