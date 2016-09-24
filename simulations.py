@@ -202,7 +202,7 @@ arm_two = Markov_Arm(1, 0, state_dist_two, state_transition_two)
 
 arms = [arm_one, arm_two]
 
-result_C = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
+# result_C = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
 
 # Simulation D
 
@@ -216,7 +216,7 @@ arm_two = Markov_Arm(1, 0, state_dist_two, state_transition_two)
 
 arms = [arm_one, arm_two]
 
-# result_D = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
+result_D = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
 
 # Simulation E
 
@@ -228,14 +228,14 @@ state_dist_two = [[0.1, [1]], [1.5, [.1]]]
 state_transition_two = [[.999, .001], [0.05, .95]]
 arm_two = Markov_Arm(1, 0, state_dist_two, state_transition_two)
 
-# result_E = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
+result_E = run_simulations(arms, markov_input_model, 1, 10000, 50000, 10000)
 
 # Print results here
 
 # pass each result into this array to be printed. Each result will
 # correspond to a different graph.
-results = [result_C, result_C]
+results = [result_D, result_E]
 # title of each graph
-titles = ['Simulation C', 'Simulation C']
+titles = ['Simulation D', 'Simulation E']
 
 make_plots(results, titles)
